@@ -3,20 +3,29 @@ import functools
 from PIL import Image
 import IPython.display
 import time
-import cv2
+#import cv2
 
 import torch
 import torchvision
 import torch.optim as optim
 import torch.nn as nn
-import utils
+#import utils
 
 
 from torchvision.models import resnet18
 
+
+# Load pre-trained resnet18
+classifier1_model = resnet18(pretrained=True)
+
 # Model review 
 #classifier1_model.eval()
-#classifier1_model = classifier1_model.cuda() # Ensure model runs on CUDA
+
+# By default resnet18 contains 1000 output features, modify to 4:
+n_class = 4
+num_in_features = classifier1_model.fc.in_features
+classifier1_model.fc = nn.Linear(num_in_features, n_class)
+classifier1_model = classifier1_model.cuda() # Ensure model runs on CUDA
 
 # Path to weights
 classifier1_state_dict = "/n/home05/sosmany/hays_lab/Lab/GSD_CreativeAI/Classifier/classifier_1e-3.pth"
