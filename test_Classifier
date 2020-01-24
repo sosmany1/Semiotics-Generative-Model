@@ -1,0 +1,75 @@
+import numpy as np
+import functools
+from PIL import Image
+import IPython.display
+import time
+import cv2
+
+import torch
+import torchvision
+import torch.optim as optim
+import torch.nn as nn
+import utils
+
+
+from torchvision.models import resnet18
+
+# Model review 
+#classifier1_model.eval()
+#classifier1_model = classifier1_model.cuda() # Ensure model runs on CUDA
+
+# Path to weights
+classifier1_state_dict = "/n/home05/sosmany/hays_lab/Lab/GSD_CreativeAI/Classifier/classifier_1e-3.pth"
+
+# Load weights
+classifier1_model.load_state_dict(torch.load(classifier1_state_dict))
+
+# directory for images
+ROOT_DIR = '/n/hays_lab/Lab/Training_Images_01'
+
+
+# ifValid method to check files
+def checkIfImage(path):
+    if '.json' in path:
+        return False
+    else:
+        return True
+
+# create transform pipeline
+transform = transforms.Compose(
+    [
+        Resize(256),
+        RandomResizedCrop(224),
+        ToTensor()
+    ]
+)
+
+# create dataset
+dataset = datasets.ImageFolder(ROOT_DIR, transform=transform, is_valid_file=checkIfImage)
+
+# split train: 80%, test: 20%
+split_ratio = 0.8
+test_length = int(split_ratio * len(dataset))
+val_length = len(dataset) - test_length
+train_data, test_data = random_split(dataset, [test_length, val_length])
+
+# dataloader
+trainloader = torch.utils.data.DataLoader(train_data, batch_size=100, shuffle=True, num_workers=32)
+testloader = torch.utils.data.DataLoader(test_data, batch_size=100, shuffle=False, num_workers=32)
+
+
+#import matplotlib.pyplot as plt
+#plt.plot(range(100), loss_arr)
+#plt.savefig("train-loss_{lr_str}.png".format(lr_str=lr_str), dpi=300)
+
+correct = 0
+total = 0
+with torch.no_grad():
+    for data in testloader:
+        images, labels = data
+        images, labels =images.cuda(), labels.cuda()
+        outputs = model(images)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+print('Accuracy of the network on the 10000 test images: %d %%' % (100 * correct / total))
